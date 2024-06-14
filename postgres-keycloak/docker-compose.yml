@@ -1,0 +1,127 @@
+version: '3.7'
+
+services:
+  postgres-5432:
+    image: postgres:latest
+    container_name: postgresdb
+    #    networks:
+    #      - isolatednetwork
+    environment:
+      POSTGRES_USER: rvssvc
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rvsdb
+    volumes:
+      - postgres_rvsdb:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U rvssvc -d rvsdb'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  prometheus-9090:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    #    networks:
+    #      - isolatednetwork
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - postgres-5432
+    restart: unless-stopped
+
+  grafana-3000:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    env_file:
+      - grafana.env
+
+  keycloak-8085:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:25.0.0
+    healthcheck: #https://www.reddit.com/r/KeyCloak/comments/14a5a1y/how_to_enable_healthcheck_on_keycloak_on/
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'" ]
+      interval: 30s
+      timeout: 5s
+      retries: 20
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8085:8080"
+    command:
+      - start-dev
+      - --import-realm
+      - --verbose
+    volumes:
+      - ./auth/import:/opt/keycloak/data/import
+
+  rvs-8080:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rvs
+    #    networks:
+    #      - isolatednetwork
+    volumes:
+      - "~/.m2:/root/.m2"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      SPRING_PROFILES_ACTIVE: uat
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/rvsdb
+      SPRING_DATASOURCE_USERNAME: rvssvc
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8085/realms/virtrics/protocol/openid-connect/auth
+      KEYCLOAK_REALM: rvs
+      KEYCLOAK_RESOURCE: virtrics-springboot-client
+    ports:
+      - "8080:8081"
+    depends_on:
+      postgres-5432:
+        condition: service_healthy
+      keycloak-8085:
+        condition: service_started
+
+  flyway_create_schemas:
+    image: flyway/flyway:latest
+    container_name: flyway
+    #    networks:
+    #      - isolatednetwork
+    command: -url=jdbc:postgresql://postgresdb:5432/rvsdb -X -user=rvssvc -password=password -connectRetries=60 migrate
+    depends_on:
+      postgres-5432:
+        condition: service_healthy
+    volumes:
+      - ./sql:/flyway/sql
+
+  flyway_clean:
+    image: flyway/flyway:latest
+    container_name: flyway-clean
+    depends_on:
+      postgres-5432:
+        condition: service_healthy
+    #    networks:
+    #      - isolatednetwork
+    command: -url=jdbc:postgresql://postgresdb:5432/rvsdb -user=rvssvc -password=password clean
+    volumes:
+      - ./sql:/flyway/sql
+      - ./docker-flyway.config:/flyway/conf/flyway.config
+
+volumes:
+  postgres_rvsdb:
+  prometheus_data:
+
+#networks:
+#  isolatednetwork:
