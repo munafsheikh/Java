@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class DemoController {
 
+
     @GetMapping("/User")
     @PreAuthorize("hasRole('Virtrics-User')")
     @PrometheusTimeMethod(name = "DemoController_helloRestaurantCustomer(jwt)_duration_seconds",
@@ -25,6 +26,7 @@ public class DemoController {
         log.info("> helloRestaurantCustomer > {} ", bearerToken);
         return "Hello RestaurantCustomer " + bearerToken;
     }
+
 
     @GetMapping("/Administrator")
     @PreAuthorize("hasRole('Virtrics-Administrator')")

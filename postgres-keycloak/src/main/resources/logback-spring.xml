@@ -40,7 +40,7 @@
         <appender-ref ref="Console"/>
     </root>
 
-    <logger name="com.bash" level="trace" additivity="false">
+    <logger name="com.virtrics" level="trace" additivity="false">
         <appender-ref ref="RollingFile"/>
         <appender-ref ref="Console"/>
     </logger>

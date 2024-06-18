@@ -79,15 +79,8 @@ services:
       retries: 3
     environment:
       SPRING_PROFILES_ACTIVE: uat
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/rvsdb
-      SPRING_DATASOURCE_USERNAME: rvssvc
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8085/realms/virtrics/protocol/openid-connect/auth
-      KEYCLOAK_REALM: rvs
-      KEYCLOAK_RESOURCE: virtrics-springboot-client
     ports:
-      - "8080:8081"
+      - "8080:8080"
     depends_on:
       postgres-5432:
         condition: service_healthy

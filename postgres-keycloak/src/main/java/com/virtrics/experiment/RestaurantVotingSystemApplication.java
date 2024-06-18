@@ -10,6 +10,7 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @Configuration
@@ -27,6 +29,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories
 @Profile("uat")
 public class RestaurantVotingSystemApplication {
+    @Value("${server.port}")
+    private String port;
+
+    @Value("${spring.profiles.active}")
+    private String environment;
 
 
     @Autowired
@@ -34,6 +41,11 @@ public class RestaurantVotingSystemApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(RestaurantVotingSystemApplication.class, args);
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 
     @PostConstruct
@@ -66,14 +78,8 @@ public class RestaurantVotingSystemApplication {
                                 .name("Apache 2.0")
                                 .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
                 .addServersItem(new Server()
-                        .url("http://localhost:8081/")
-                        .description("Production server"))
-                .addServersItem(new Server()
-                        .url("https://api.rvs.com/v1")
-                        .description("Production server"))
-                .addServersItem(new Server()
-                        .url("https://api-staging.rvs.com/v1")
-                        .description("Staging server"))
+                        .url("http://localhost:" + port + "/")
+                        .description(environment))
                /* .security(List.of(new SecurityRequirement()
                         .name("bearerAuth")
                         .scopes(List.of("read:menu", "write:orders")))))
