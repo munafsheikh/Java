@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout}">
+    <head>
+        <title>[[#{login.add.headline}]]</title>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <div class="d-flex flex-wrap mb-4">
+                <h1 class="flex-grow-1">[[#{login.add.headline}]]</h1>
+                <div>
+                    <a th:href="@{/logins}" class="btn btn-secondary">[[#{login.add.back}]]</a>
+                </div>
+            </div>
+            <div th:replace="~{fragments/forms::globalErrors('login')}" />
+            <form th:action="${requestUri}" method="post">
+                <div th:replace="~{fragments/forms::inputRow(object='login', field='username', required=true)}" />
+                <div th:replace="~{fragments/forms::inputRow(object='login', field='email')}" />
+                <div th:replace="~{fragments/forms::inputRow(object='login', field='passwordHash', required=true)}" />
+                <div th:replace="~{fragments/forms::inputRow(object='login', field='role', required=true, type='radio')}" />
+                <div th:replace="~{fragments/forms::inputRow(object='login', field='person', type='multiselect')}" />
+                <input type="submit" th:value="#{login.add.headline}" class="btn btn-primary mt-4" />
+            </form>
+        </div>
+    </body>
+</html>
