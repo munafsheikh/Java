@@ -1,2 +1,5 @@
-# spring-boot-experiments
-Spring-Boot Experiments
+# Java
+Collection of Java test projects
+
+
+
